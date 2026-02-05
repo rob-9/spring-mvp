@@ -28,7 +28,6 @@ def detect_retry_bloat(children: List[Span]) -> List[Dict[str, Any]]:
     Returns:
         List of waste detection results. Each result contains:
         - type: "retry_bloat"
-        - severity: "high" (>3 retries) or "medium" (2-3 retries)
         - operation_name: Name of the retried operation
         - retry_count: Number of retry attempts (total calls - 1)
         - wasted_cost: Cost of retry attempts (excluding first)
@@ -55,6 +54,13 @@ def detect_retry_bloat(children: List[Span]) -> List[Dict[str, Any]]:
     if len(children) <= 1:
         return []
 
+    # verify all children share same parent (sibling validation)
+    parent_ids = {s.parent_span_id for s in children}
+    if len(parent_ids) > 1:
+        raise ValueError(
+            f"All children must share same parent_span_id. Found {len(parent_ids)} different parents."
+        )
+
     # group spans by operation name
     grouped = _group_spans_by_name(children)
 
@@ -64,12 +70,10 @@ def detect_retry_bloat(children: List[Span]) -> List[Dict[str, Any]]:
         if len(spans) > 1:
             # calculate metrics for this retry pattern
             metrics = _calculate_retry_metrics(spans)
-            severity = _determine_severity(metrics["retry_count"])
 
             # build result dictionary
             waste_results.append({
                 "type": "retry_bloat",
-                "severity": severity,
                 "operation_name": operation_name,
                 "retry_count": metrics["retry_count"],
                 "wasted_cost": metrics["wasted_cost"],
@@ -119,12 +123,12 @@ def _calculate_retry_metrics(spans: List[Span]) -> Dict[str, Any]:
         - span_ids: List of all span IDs
 
     Note:
-        - Sorts by attempt_number to identify first attempt
+        - Sorts by attempt_number (primary) and start_time (fallback)
         - Treats None costs as 0.0
         - First attempt cost is not considered wasted
     """
-    # sort by attempt_number (or fallback to order in list)
-    sorted_spans = sorted(spans, key=lambda s: s.attempt_number)
+    # sort by attempt_number (primary), start_time (fallback for safety)
+    sorted_spans = sorted(spans, key=lambda s: (s.attempt_number, s.start_time))
 
     # calculate costs
     first_attempt_cost = sorted_spans[0].cost_usd or 0.0
@@ -143,17 +147,3 @@ def _calculate_retry_metrics(spans: List[Span]) -> Dict[str, Any]:
         "total_cost": total_cost,
         "span_ids": span_ids
     }
-
-
-def _determine_severity(retry_count: int) -> str:
-    """
-    Determine severity level based on retry count.
-
-    Args:
-        retry_count: Number of retry attempts (total - 1)
-
-    Returns:
-        "high" if retry_count > 3, otherwise "medium"
-    """
-    
-    return "high" if retry_count > 3 else "medium"

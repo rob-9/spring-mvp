@@ -1,16 +1,31 @@
 """
-Waste detection algorithms.
+waste detection algorithms.
 
-Each detector identifies a specific waste pattern:
-- retry_bloat: Same operation repeated multiple times
-- loop_detection: Infinite loops or repeated patterns
-- dead_end: Work that cost money but produced no value
-- context_waste: Re-ingesting same context multiple times
-- cascade: Failures that trigger downstream waste
+each detector identifies a specific waste pattern:
+- retry_bloat: same operation repeated multiple times
+- loop_detection: infinite loops or repeated patterns
+- dead_end: work that cost money but produced no value
+- context_waste: re-ingesting same context multiple times
+- cascade: failures that trigger downstream waste
 """
 
 from .retry_bloat import detect_retry_bloat
 from .dead_end import detect_dead_end
 from .loop_detection import detect_loops
+from .context_waste import detect_context_waste, detect_duplicate_prompts
+from .cascade import (
+    detect_cascade_failures,
+    detect_error_clusters,
+    analyze_retry_cascade
+)
 
-__all__ = ['detect_retry_bloat', 'detect_dead_end', 'detect_loops']
+__all__ = [
+    'detect_retry_bloat',
+    'detect_dead_end',
+    'detect_loops',
+    'detect_context_waste',
+    'detect_duplicate_prompts',
+    'detect_cascade_failures',
+    'detect_error_clusters',
+    'analyze_retry_cascade',
+]

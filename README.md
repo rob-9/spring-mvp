@@ -1,10 +1,31 @@
 # Spring MVP
 
-Cut unnecessary costs for multi-agent systems. 
+Cost observability platform for multi-agent AI systems. Shows which agent is breaking your workflow, how much money it's wasting, and which downstream agents are affected.
 
-FasAPI, TypeScript, Postgres, OpenTelemtry SDK
+### Customer Usage
 
-## Skeleton
+```python
+# 1. Install OpenTelemetry SDK (standard)
+pip install opentelemetry-api opentelemetry-sdk
+
+# 2. Install our framework adapter
+pip install spring-crewai  # or spring-autogen, spring-langgraph
+
+# 3. Configure to send to our backend
+from spring_crewai import instrument_crewai
+
+instrument_crewai(
+    endpoint="https://api.spring.ai/v1/traces",
+    api_key="your_key"
+)
+
+# Customer's code runs normally, spans captured automatically
+crew.kickoff()
+```
+
+**Stack:** FastAPI, TypeScript, PostgreSQL, OpenTelemetry SDK
+
+## Codebase Structure
 
 ```
 backend/
@@ -28,7 +49,7 @@ backend/
 └── tests/             # Test suite
 ```
 
-### Installation
+## Installation
 
 ```bash
 # Install dependencies
@@ -38,7 +59,8 @@ pip install -r requirements.txt
 python -m backend.api.app
 ```
 
-## Docs
+## Documentation
 
-See `/docs/mvp-summary.md`
-See `/docs/decision-cost-visualization.md`
+- `/docs/mvp-summary.md` - Full MVP implementation guide
+- `/docs/architecture/decisions.md` - Architecture decision records
+- `/docs/decision-cost-visualization.md` - Cost visualization specs

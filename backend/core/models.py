@@ -17,6 +17,19 @@ class SpanStatus(str, Enum):
     RUNNING = "running"
 
 
+class SpanLink(BaseModel):
+    """
+    Represents a non-hierarchical relationship between spans.
+
+    Used to model cycles, scatter/gather patterns, and other DAG relationships
+    that don't fit the strict parent-child hierarchy.
+    """
+    trace_id: str
+    span_id: str
+    link_type: Optional[str] = None  # e.g., "continues_from", "follows_from", "retry_of"
+    attributes: Dict[str, Any] = Field(default_factory=dict)
+
+
 class Span(BaseModel):
     """
     Represents a single unit of work (LLM call, agent decision, tool call).
@@ -48,6 +61,9 @@ class Span(BaseModel):
     status: SpanStatus = SpanStatus.RUNNING
     attempt_number: int = 1
     decision_made: Optional[str] = None
+
+    # OpenTelemetry span links for non-hierarchical relationships
+    links: List[SpanLink] = Field(default_factory=list)
 
     # Additional context
     metadata: Dict[str, Any] = Field(default_factory=dict)

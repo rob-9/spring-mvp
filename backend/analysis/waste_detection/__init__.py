@@ -10,5 +10,7 @@ Each detector identifies a specific waste pattern:
 """
 
 from .retry_bloat import detect_retry_bloat
+from .dead_end import detect_dead_end
+from .loop_detection import detect_loops
 
-__all__ = ['detect_retry_bloat']
+__all__ = ['detect_retry_bloat', 'detect_dead_end', 'detect_loops']

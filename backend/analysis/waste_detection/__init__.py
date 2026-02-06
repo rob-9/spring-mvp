@@ -9,9 +9,6 @@ Each detector identifies a specific waste pattern:
 - cascade: Failures that trigger downstream waste
 """
 
-# TODO: Import detectors as they're implemented
-# from .retry_bloat import RetryBloatDetector
-# from .loop_detection import LoopDetector
-# from .dead_end import DeadEndDetector
+from .retry_bloat import detect_retry_bloat
 
-__all__ = []
+__all__ = ['detect_retry_bloat']

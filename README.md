@@ -1,66 +1,48 @@
-# Spring MVP
+# Spring
 
-Cost observability platform for multi-agent AI systems. Shows which agent is breaking your workflow, how much money it's wasting, and which downstream agents are affected.
+Decision-level cost attribution for multi-agent AI systems. Track the true cost of every agent decision — not just per-call API spend, but the full downstream tree: retries it triggered, cascades it caused, and tokens it wasted.
 
-### Customer Usage
+**Stack:** FastAPI, PostgreSQL, OpenTelemetry
 
-```python
-# 1. Install OpenTelemetry SDK (standard)
-pip install opentelemetry-api opentelemetry-sdk
-
-# 2. Install our framework adapter
-pip install spring-crewai  # or spring-autogen, spring-langgraph
-
-# 3. Configure to send to our backend
-from spring_crewai import instrument_crewai
-
-instrument_crewai(
-    endpoint="https://api.spring.ai/v1/traces",
-    api_key="your_key"
-)
-
-# Customer's code runs normally, spans captured automatically
-crew.kickoff()
-```
-
-**Stack:** FastAPI, TypeScript, PostgreSQL, OpenTelemetry SDK
-
-## Codebase Structure
-
-```
-backend/
-├── core/              # Data models (Span, Trace, DecisionCost)
-│   └── models.py
-├── instrumentation/   # OpenTelemetry setup and agent instrumentation
-│   └── otel_tracer.py
-├── analysis/          # Core algorithms
-│   ├── waste_detection/     # Waste detection algorithms
-│   │   ├── retry_bloat.py   # Retry pattern detection
-│   │   ├── loop_detection.py # Structural & behavioral loop detection
-│   │   ├── dead_end.py       # Dead-end path detection
-│   │   ├── cascade.py        # Cascading failure detection
-│   │   └── context_waste.py  # Context window waste detection
-│   └── decision_path.py      # Decision-level cost attribution
-├── storage/           # Database persistence layer
-│   └── span_store.py
-├── api/               # FastAPI routes
-│   ├── app.py
-│   └── routes/
-└── tests/             # Test suite
-```
-
-## Installation
+## Quickstart
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Run backend
-python -m backend.api.app
+cp .env.example .env         # set POSTGRES_PASSWORD
+docker compose up             # starts postgres + api on :8000
+python -m backend.scripts.seed_demo_data  # load demo traces
 ```
 
-## Documentation
+Or without Docker:
 
-- `/docs/mvp-summary.md` - Full MVP implementation guide
-- `/docs/architecture/decisions.md` - Architecture decision records
-- `/docs/decision-cost-visualization.md` - Cost visualization specs
+```bash
+pip install -r requirements.txt
+python -m backend.api.app  # requires local postgres
+```
+
+## API
+
+| Endpoint | Description |
+|---|---|
+| `POST /api/spans/ingest` | Ingest spans from instrumented apps |
+| `GET /api/traces` | List traces with filtering/sorting |
+| `GET /api/traces/{id}/analysis` | Decision cost trees + waste detection |
+| `GET /api/traces/{id}/tree` | Recursive cost attribution tree |
+| `GET /api/analytics/overview` | Dashboard stats |
+| `GET /api/analytics/agents` | Per-agent cost and error breakdown |
+| `GET /api/analytics/cost-trends` | Cost over time |
+| `GET /api/analytics/waste-summary` | Aggregate waste across traces |
+
+## Customer SDK
+
+```python
+from spring_crewai import instrument_crewai
+
+instrument_crewai(endpoint="https://api.spring.ai/v1/traces", api_key="sk-...")
+crew.kickoff()  # spans captured automatically
+```
+
+## Tests
+
+```bash
+pytest backend/tests/ -v  # 152 tests
+```

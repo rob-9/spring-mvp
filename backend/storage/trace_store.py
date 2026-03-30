@@ -234,9 +234,15 @@ class TraceStore:
         if since is None:
             since = datetime.utcnow() - timedelta(hours=24)
 
-        # Use date_trunc for bucketing
+        # Use strftime for SQLite compat, date_trunc for Postgres
+        dialect = self.session.bind.dialect.name if self.session.bind else "postgresql"
+        if dialect == "sqlite":
+            bucket_expr = func.strftime("%Y-%m-%d %H:00:00", TraceModel.start_time)
+        else:
+            bucket_expr = func.date_trunc("hour", TraceModel.start_time)
+
         query = select(
-            func.date_trunc("hour", TraceModel.start_time).label("bucket"),
+            bucket_expr.label("bucket"),
             func.count(TraceModel.trace_id).label("trace_count"),
             func.coalesce(func.sum(TraceModel.total_cost_usd), 0.0).label("total_cost"),
             func.coalesce(func.sum(TraceModel.total_tokens), 0).label("total_tokens"),
@@ -252,7 +258,7 @@ class TraceStore:
 
         return [
             {
-                "timestamp": row.bucket.isoformat() if row.bucket else None,
+                "timestamp": str(row.bucket) if row.bucket else None,
                 "trace_count": row.trace_count,
                 "total_cost": float(row.total_cost),
                 "total_tokens": int(row.total_tokens),

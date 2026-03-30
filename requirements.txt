@@ -12,9 +12,11 @@ opentelemetry-instrumentation==0.48b0
 # Database
 psycopg2-binary==2.9.9
 sqlalchemy==2.0.35
-asyncpg==0.29.0  # async postgres driver
-alembic==1.13.1  # db migrations
+asyncpg==0.29.0
+alembic==1.13.1
 
 # Testing
 pytest==8.3.0
 pytest-asyncio==0.24.0
+httpx==0.27.0
+aiosqlite==0.20.0

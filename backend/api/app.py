@@ -7,38 +7,30 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from backend.storage.database import init_db, close_db
-from backend.api.routes import spans
+from backend.api.routes import spans, traces, analytics
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Application lifespan manager.
-
-    Handles startup and shutdown events.
-    """
-    # startup: initialize database
+    """Application lifespan manager."""
     await init_db()
-    print("✓ database initialized")
-
     yield
-
-    # shutdown: close database connections
     await close_db()
-    print("✓ database connections closed")
 
 
 app = FastAPI(
     title="Spring Agent Intelligence Platform",
-    description="Observability for multi-agent AI systems",
+    description="Cost observability for multi-agent AI systems. "
+    "Shows which agent is breaking your workflow, how much money it's wasting, "
+    "and which downstream agents are affected.",
     version="0.1.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # cors for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # next.js dev server
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,6 +38,8 @@ app.add_middleware(
 
 # include routers
 app.include_router(spans.router)
+app.include_router(traces.router)
+app.include_router(analytics.router)
 
 
 @app.get("/health")
